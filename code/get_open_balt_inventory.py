@@ -53,13 +53,6 @@ def is_endpoint_alive(endpoint):
     return fetch_url(endpoint) is not None
 
 
-# Is the 'modified' datetime column older than 90 days ago?
-# t
-def is_data_fresh(pd_timestamp):
-    now = datetime.utcnow()
-    parsed_time = datetime(year=pd_timestamp.year, month=pd_timestamp.month, day=pd_timestamp.day)
-    return now > parsed_time + timedelta(days=90)
-
 
 def alert_open_baltimore():
     print('Alert!')
@@ -126,18 +119,16 @@ def endpoints_health_check(data):
 
 # Function to process a single data endpoint row
 def process_endpoint_health(row):
-    modified_at = row['modified']
     endpoint = row['geo_api']
     check1 = is_endpoint_alive(endpoint)
-    check2 = is_data_fresh(modified_at)
-    return [endpoint, check1, check2]
+    return [endpoint, check1]
 
 
 # Handling a given endpoint health result...
 # check1 is the endpoint liveness check
 # check2 is the data freshness check
-def process_endpoint_health_result(endpoint_id, check1, check2):
-    if check1 is False or check2 is False:
+def process_endpoint_health_result(endpoint_id, check1):
+    if check1 is False:
         print(f'{endpoint_id} failed health check.')
         alert_open_baltimore()
 
@@ -205,6 +196,6 @@ if __name__ == '__main__':
     # Get the results for the health check
     health_check_results = endpoints_health_check(endpoint_data)
     # Process the results
-    [process_endpoint_health_result(endpoint, check1, check2) for [endpoint, check1, check2] in health_check_results]
+    [process_endpoint_health_result(endpoint, check1) for [endpoint, check1] in health_check_results]
 
 
